@@ -6,9 +6,11 @@ RUN         apt-get update && \
             useradd --no-log-init -r -g ruby_worker ruby_worker && \
             rm -rf /var/lib/apt/lists/*
 
-WORKDIR     /opt
+RUN         git clone https://github.com/sawasy/http_server.git /opt/http_server
 
-RUN         git clone https://github.com/sawasy/http_server.git 
+WORKDIR     /opt/http_server
 
-ENTRYPOINT ["ruby"]
-CMD        ["webserver.rb"]
+USER       ruby_worker
+
+ENTRYPOINT ["ruby", "http_server.rb"]
+
