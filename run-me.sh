@@ -73,7 +73,6 @@ check() {
     curl $(grep -E '^http://' tbd-tmpfile )
     kill -9  $(cat tbd-pidfile) 2>/dev/null
     wait $(cat tbd-pidfile) 2>/dev/null && sleep 10
-    #sleep 10
     rm tbd-*
 }
 
