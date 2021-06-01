@@ -2,12 +2,35 @@
 
 #just good practise
 set -euo pipefail
+set -x
 
 tools=(
     "minikube"
     "docker"
     "kubectl"
 )
+
+main() {
+    case "${1:-}" in
+        deploy)
+            is_tools_installed
+            is_minikube_up
+            lets_build_image
+            deploy_manifest
+            ;;
+        cleanup)
+            cleanup
+            ;;
+        check)
+            check
+            ;;
+        *)
+            echo "Unsupported command: $*. Use deploy, cleanup or check" >&2
+            exit 1
+        ;;
+    esac
+    exit 0
+}
 
 is_tools_installed() {
     for t in "${tools[@]}"; do
@@ -35,7 +58,6 @@ is_minikube_up() {
 }
 
 lets_build_image() {
-    #point to local docker env
     eval "$(minikube docker-env)"
     docker build -t sawasy-http-server-tbd . || exit 1
 }
@@ -44,29 +66,22 @@ deploy_manifest() {
     kubectl apply -f all-in-one-manifest.yml
 }
 
+check() {
+    #this is very ugly 
+    minikube service -n http-server --url http-server > tbd-tmpfile &
+    echo "$!" > tbd-pidfile
+    sleep 8
+    curl $(grep -E '^http://' tbd-tmpfile )
+    kill -9  $(cat tbd-pidfile) 2>/dev/null
+    wait $(cat tbd-pidfile) 2>/dev/null && sleep 10
+    #sleep 10
+    rm tbd-*
+}
+
 cleanup() {
     kubectl delete -f all-in-one-manifest.yml
     docker rmi sawasy-http-server-tbd
-    
-}
-
-main() {
-    case "${1:-}" in
-      deploy)
-        is_tools_installed
-        is_minikube_up
-        lets_build_image
-        deploy_manifest
-        ;;
-      cleanup)
-        cleanup
-        ;;
-      *)
-        echo "Unsupported command: $*. Use deploy or cleanup" >&2
-        exit 1
-      ;;
-    esac
-    exit 0
+    minikube stop
 }
 
 main "$@"
