@@ -2,7 +2,6 @@
 
 #just good practise
 set -euo pipefail
-set -x
 
 tools=(
     "minikube"
